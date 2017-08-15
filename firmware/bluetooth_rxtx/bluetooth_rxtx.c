@@ -75,7 +75,7 @@ generic_tx_packet tx_pkt;
 
 /* le stuff */
 uint8_t slave_mac_address[6] = { 0, };
-uint8_t slave_pdu[39] = { 0, };
+uint8_t slave_pdu[39] = { 0x02, 0x01, 0x05};
 uint8_t slave_pdu_len;
 
 le_state_t le = {

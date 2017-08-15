@@ -71,6 +71,7 @@ static void usage(void)
 	printf("\t-p promiscuous: sniff active connections\n");
 	printf("\t-a[address] get/set access address (example: -a8e89bed6)\n");
 	printf("\t-s<address> faux slave mode, using MAC addr (example: -s22:44:66:88:aa:cc)\n");
+	printf("\t-d<filename> in faux slave mode, use the following pdu data (\\x02\\x01\\x05 by defaut)\n");
 	printf("\t-t<address> set connection following target (example: -t22:44:66:88:aa:cc)\n");
 	printf("\n");
 	printf("    Interference (use with -f or -p):\n");
@@ -101,10 +102,12 @@ int main(int argc, char *argv[])
 	int do_adv_index;
 	int do_slave_mode;
 	int do_target;
+	int do_pdudata;
 	enum jam_modes jam_mode = JAM_NONE;
 	int ubertooth_device = -1;
 	ubertooth_t* ut = ubertooth_init();
-
+	uint8_t	pdudata[100];
+	uint8_t pdudatalen;
 	btle_options cb_opts = { .allowed_access_address_errors = 32 };
 
 	int r;
@@ -113,11 +116,12 @@ int main(int argc, char *argv[])
 
 	do_follow = do_promisc = 0;
 	do_get_aa = do_set_aa = 0;
+	do_pdudata = 0
 	do_crc = -1; // 0 and 1 mean set, 2 means get
 	do_adv_index = 37;
 	do_slave_mode = do_target = 0;
 
-	while ((opt=getopt(argc,argv,"a::r:hfpU:v::A:s:t:x:c:q:jJiI")) != EOF) {
+	while ((opt=getopt(argc,argv,"a::r:hfpU:v::A:s:t:x:c:q:jJiId:")) != EOF) {
 		switch(opt) {
 		case 'a':
 			if (optarg == NULL) {
@@ -212,6 +216,16 @@ int main(int argc, char *argv[])
 		case 'J':
 			jam_mode = JAM_CONTINUOUS;
 			break;
+		case 'd':
+			f = open(optarg, r);
+			if(f > 0){
+				pdudatalen = read(f,pdudata,100);
+				f.close();
+				do_pdudata = 1;
+			}else{
+				printf("Ignoring PDU file, error occured while reading: %s\n", optarg);
+			}
+			break
 		case 'h':
 		default:
 			usage();
@@ -300,6 +314,9 @@ int main(int argc, char *argv[])
 	}
 
 	if (do_slave_mode) {
+		if (do_pdudata) {
+			cmd_btle_set_pdu(ut->devh, pdudata, pdudatalen);
+		}
 		u16 channel;
 		if (do_adv_index == 37)
 			channel = 2402;
