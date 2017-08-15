@@ -75,6 +75,8 @@ generic_tx_packet tx_pkt;
 
 /* le stuff */
 uint8_t slave_mac_address[6] = { 0, };
+uint8_t slave_pdu[39] = { 0, };
+uint8_t slave_pdu_len;
 
 le_state_t le = {
 	.access_address = 0x8e89bed6,           // advertising channel access address
@@ -669,6 +671,12 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 		ego_mode = request_params[0];
 		break;
 
+	case UBERTOOTH_BTLE_SET_PDU:
+		slave_pdu_len = data[0];
+		slave_pdu_len = (slave_pdu_len > 39):39?slave_pdu_len);
+		memcpy(&slave_pdu, data+1, slave_pdu_len);
+		break;
+		
 	default:
 		return 0;
 	}
@@ -2268,26 +2276,37 @@ void bt_promisc_le() {
 void bt_slave_le() {
 	u32 calc_crc;
 	int i;
+	int lllen;
+	u8 adv_ind[47] = {0,};
+//	u8 adv_ind[] = {
+//		// LL header
+//		0x00, 0x09,
+//
+//		// advertising address
+//		0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+//
+//		// advertising data
+//		0x02, 0x01, 0x05,
+//
+//		// CRC (calc)
+//		0xff, 0xff, 0xff,
+//	};
 
-	u8 adv_ind[] = {
-		// LL header
-		0x00, 0x09,
+//	u8 adv_ind_len = sizeof(adv_ind) - 3;
+	u8 adv_ind_len = 2+6+slave_pdu_len;
 
-		// advertising address
-		0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-
-		// advertising data
-		0x02, 0x01, 0x05,
-
-		// CRC (calc)
-		0xff, 0xff, 0xff,
-	};
-
-	u8 adv_ind_len = sizeof(adv_ind) - 3;
-
+	//ll header
+	llen = 1 + 2 + 6 + slave_pdu_len;
+	adv_ind[0] = (lllen & 0xff00)>>8;
+	adv_ind[1] = (lllen & 0xff);
+	
 	// copy the user-specified mac address
 	for (i = 0; i < 6; ++i)
 		adv_ind[i+2] = slave_mac_address[5-i];
+
+	// copy the user-specified pdu data which may be different then a basic advertisment
+	for (i = 0; i < slave_pdu_len; ++i)
+		adv_ind[i+2] = slave_pdu[i];
 
 	calc_crc = btle_calc_crc(le.crc_init_reversed, adv_ind, adv_ind_len);
 	adv_ind[adv_ind_len+0] = (calc_crc >>  0) & 0xff;
@@ -2594,7 +2613,7 @@ int main()
 				case MODE_IDLE:
 					cc2400_idle();
 					break;
-				default:
+				break;				default:
 					/* This is really an error state, but what can you do? */
 					break;
 			}
