@@ -952,7 +952,7 @@ int cmd_btle_set_pdu(struct libusb_device_handle* devh, u8 *data, u8 datalen)
 {
 	int r;
 	uint8_t pdudata[39+1];
-	datalen = (datalen > 39): 39? datalen;
+	datalen = (datalen > 39)? 39: datalen;
 	memcpy(pdudata+1,data,datalen);
 	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_BTLE_SET_TARGET, 0, 0,
 			pdudata, datalen+1, 1000);
