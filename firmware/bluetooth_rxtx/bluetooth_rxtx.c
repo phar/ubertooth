@@ -673,7 +673,7 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 
 	case UBERTOOTH_BTLE_SET_PDU:
 		slave_pdu_len = data[0];
-		slave_pdu_len = (slave_pdu_len > 39)?39:slave_pdu_len);
+		slave_pdu_len = (slave_pdu_len > 39)?39:slave_pdu_len;
 		memcpy(&slave_pdu, data+1, slave_pdu_len);
 		break;
 		
