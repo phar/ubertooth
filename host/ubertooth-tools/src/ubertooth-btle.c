@@ -116,10 +116,11 @@ int main(int argc, char *argv[])
 
 	do_follow = do_promisc = 0;
 	do_get_aa = do_set_aa = 0;
-	do_pdudata = 0
+	do_pdudata = 0;
 	do_crc = -1; // 0 and 1 mean set, 2 means get
 	do_adv_index = 37;
 	do_slave_mode = do_target = 0;
+	int fd;
 
 	while ((opt=getopt(argc,argv,"a::r:hfpU:v::A:s:t:x:c:q:jJiId:")) != EOF) {
 		switch(opt) {
@@ -217,15 +218,15 @@ int main(int argc, char *argv[])
 			jam_mode = JAM_CONTINUOUS;
 			break;
 		case 'd':
-			f = open(optarg, r);
-			if(f > 0){
-				pdudatalen = read(f,pdudata,100);
-				f.close();
+			fd = open(optarg, r);
+			if(fd > 0){
+				pdudatalen = read(fd,pdudata,100);
+				close(fd);
 				do_pdudata = 1;
 			}else{
 				printf("Ignoring PDU file, error occured while reading: %s\n", optarg);
 			}
-			break
+			break;
 		case 'h':
 		default:
 			usage();

@@ -930,12 +930,14 @@ int cmd_btle_slave(struct libusb_device_handle* devh, u8 *mac_address)
 	return 0;
 }
 
-int cmd_btle_slave(struct libusb_device_handle* devh, u8 *mac_address)
+int cmd_btle_set_pdu(struct libusb_device_handle* devh, u8 *data, u8 datalen)
 {
 	int r;
-	
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_BTLE_SLAVE, 0, 0,
-								mac_address, 6, 1000);
+	uint8_t pdudata[39+1];
+	datalen = (datalen > 39)? 39: datalen;
+	memcpy(pdudata+1,data,datalen);
+	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_BTLE_SET_PDU, 0, 0,
+								pdudata, datalen+1, 1000);
 	if (r < 0) {
 		if (r == LIBUSB_ERROR_PIPE) {
 			fprintf(stderr, "control message unsupported\n");
@@ -948,14 +950,12 @@ int cmd_btle_slave(struct libusb_device_handle* devh, u8 *mac_address)
 	return 0;
 }
 
-int cmd_btle_set_pdu(struct libusb_device_handle* devh, u8 *data, u8 datalen)
+int cmd_btle_set_target(struct libusb_device_handle* devh, u8 *mac_address)
 {
 	int r;
-	uint8_t pdudata[39+1];
-	datalen = (datalen > 39)? 39: datalen;
-	memcpy(pdudata+1,data,datalen);
+
 	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_BTLE_SET_TARGET, 0, 0,
-			pdudata, datalen+1, 1000);
+			mac_address, 6, 1000);
 	if (r < 0) {
 		if (r == LIBUSB_ERROR_PIPE) {
 			fprintf(stderr, "control message unsupported\n");
