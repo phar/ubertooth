@@ -76,7 +76,7 @@ generic_tx_packet tx_pkt;
 /* le stuff */
 uint8_t slave_mac_address[6] = { 0, };
 uint8_t slave_pdu[39] = { 0x02, 0x01, 0x05};
-uint8_t slave_pdu_len;
+uint8_t slave_pdu_len = 3;
 
 le_state_t le = {
 	.access_address = 0x8e89bed6,           // advertising channel access address
@@ -2306,7 +2306,7 @@ void bt_slave_le() {
 
 	// copy the user-specified pdu data which may be different then a basic advertisment
 	for (i = 0; i < slave_pdu_len; ++i)
-		adv_ind[i+2] = slave_pdu[i];
+		adv_ind[i+8] = slave_pdu[i];
 
 	calc_crc = btle_calc_crc(le.crc_init_reversed, adv_ind, adv_ind_len);
 	adv_ind[adv_ind_len+0] = (calc_crc >>  0) & 0xff;
